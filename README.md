@@ -739,13 +739,11 @@ Changing the `PlacementRule` used by our `Subscription` will move our applicatio
 
 ## Disaster Recovery on Red Hat Advanced Cluster Management
 
-In the previous post we migrated our application across different regions using `PlacementRules`.
-
-In this blog post we are going to see how `PlacementRules` can help us with a basic Disaster Recovery scenario.
+In Part 4, we are going to see how `PlacementRules` can help us with a basic Disaster Recovery scenario.
 
 ### CONFIGURING REQUIRED ADVANCED CLUSTER MANAGEMEN MANIFESTS
 
-We will re-use the Red Hat Advanced Cluster Management manifests used in the previous blog post, which means that we will be using the Namespace `reverse-words-region` and the Subscription `reversewords-region-app-subscription`.
+We will re-use the Red Hat Advanced Cluster Management manifests used iabove, which means that we will be using the Namespace `reverse-words-region` and the Subscription `reversewords-region-app-subscription`.
 
 We will need to create a new `PlacementRule`. This time we will include new properties to our `PlacementRule`; let's review them:
 
