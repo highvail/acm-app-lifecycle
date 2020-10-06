@@ -1,7 +1,7 @@
 apiVersion: apps.open-cluster-management.io/v1
 kind: PlacementRule
 metadata:
-  name: us-eu-region-clusters
+  name: na-eu-region-clusters
   namespace: reverse-words-region
 spec:
   clusterConditions:
@@ -13,6 +13,6 @@ spec:
       operator: In
       values:
       - EU
-      - US
+      - NA
     matchLabels: {}
   clusterReplicas: 1
