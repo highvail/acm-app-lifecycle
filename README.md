@@ -4,18 +4,14 @@
 
 > Based on the work of Mario Vázquez [source](https://www.openshift.com/blog/applications-here-applications-there-part-1-deploying-an-application-to-multiple-environments)
 
-What does it mean to manage your apps with Red Hat Advanced Cluster Management? 
+Red Hat Advanced Cluster Management features complete Application Life-cycle capabilities. Thgis article will explore some of the GitOps capabilities built into the Red Hat Advanced Cluster Management. In order to do so, we will be using the following environment: 
 
-In today's blog post, we are  going to show you how Red Hat Advanced Cluster Management can be used  for managing your applications across multiple environments, no matter  where they are; cloud? on-premise? We've got you covered!
-
-Red Hat Advanced Cluster  Management features complete Application Life-cycle capabilities and  today we are going to explore some of the GitOps capabilities built in  to the product. In order to do so, we will be using the following  environment: 
-
-> **NOTE**: Pay special attention to the different labels, as they will be used during the blog posts examples.
+> **NOTE**: The labels used within this example are reused throughout the demonstration.
 
 ![infra-view](artifacts/ocpClusterManager.png) 
 
 
-In the diagram, you can see that we will be using `3` OpenShift clusters. Red Hat Advanced Cluster Management uses a hub  cluster/managed cluster model for managing the different connected  clusters, the `hub` cluster is where Red Hat Advanced Cluster Management is running, `managed` clusters are the clusters that are managed by Red Hat Advanced Cluster  Management. For the hub cluster, see the following supported products: 
+We will be using three OpenShift clusters for this demo. Red Hat Advanced Cluster Management uses a hub cluster/managed cluster model for managing the different connected clusters, the `hub` cluster is where Red Hat Advanced Cluster Management is running, `managed` clusters are the clusters that are managed by Red Hat Advanced Cluster  Management. For the hub cluster, see the following supported products: 
 
 | Component                                          | Version                       |
 | :------------------------------------------------- | :---------------------------- |
@@ -23,13 +19,13 @@ In the diagram, you can see that we will be using `3` OpenShift clusters. Red Ha
 | OKD OpenShift Container Platform                   | 4.5.0-0.okd.2020-08-12-020541 |
 | Red Hat Advanced Cluster Management for Kubernetes | 2.0.3                         |
 
-You can see that our `Managed` clusters have some labels, which will be used later for placing our applications across the different environments. 
+You can see that our `managed` clusters have some labels, which will be used later for placing our applications across the different environments. 
 
-Our managed `development` cluster is named `okd4` and it is deployed in the `EU` region at `AWS`. We also have a managed `production` cluster named `ocp45` deployed in the `NA` region at `AWS`. 
+Our managed `development` cluster is named `okd4` and it is deployed in the `EU` region in a three node (all master) bare metal cluster. We also have a managed `production` cluster named `ocp45` deployed in the `NA` region on a five node (three managers and two worker nodes) bare metal clsuter. 
 
 ###  Application Life-cycle 
 
-The possibilities offered by  Red Hat Advanced Cluster Management with regards to application  lifecycle are plentiful. In this series of blog posts we are going to  focus on GitOps capabilities for the following use cases:
+The possibilities offered by Red Hat Advanced Cluster Management with regards to application lifecycle are plentiful. In this series of blog posts we are going to focus on GitOps capabilities for the following use cases:
 
 - Deploying an application to multiple environments 
 - Blue-green deployment
@@ -56,15 +52,15 @@ GitOps patterns will be  followed to deploy our applications, the different mani
 | `prod`   | Stores the overlay files for our applications, which apply to production environments |
 | `stage`  | Stores the overlay files for our applications, which apply to staging environments |
 
-> **NOTE**: There are  multiple ways to organise the Git repository, Red Hat Advanced Cluster  Management won't force you to go one way or another, you can organise  the Git repository as it fits you best. 
+> **NOTE**: There are multiple ways to organise the Git repository, Red Hat Advanced Cluster Management won't force you to go one way or another, you can organise the Git repository as it fits you best. 
 
 ### Deploying an application to multiple environments 
 
-We are going to explore how  Red Hat Advanced Cluster Management can help us to deploy our  applications to multiple environments, for this example we have our  application, a simple web-service that reverses words. This web-service  has two releases, the `stage` release which is the version our development team is testing at the moment and the `production` release, which is the version our customers are using. 
+We are going to explore how Red Hat Advanced Cluster Management can help us to deploy our applications to multiple environments, for this example we have our application, a simple web-service that reverses words. This web-service has two releases, the `stage` release which is the version our development team is testing at the moment and the `production` release, which is the version our customers are using. 
 
 Red Hat Advanced Cluster Management has [Kustomize](https://kustomize.io/) support, which makes it really easy to configure our applications based on the destination environments. 
 
-As previously mentioned, we  will use the same application for both environments, but the release  will be different depending on which environment the application is  being deployed to. 
+As previously mentioned, we will use the same application for both environments, but the release will be different depending on which environment the application is being deployed to. 
 
 For deploying the applications, we will use the `oc` tool and a set of `yaml` manifests with the required configurations for Red Hat Advanced Cluster Management that define a `Channel`, `Subscription`, and `PlacementRule`. Everything we do from the command line can be done from the web console, as well. 
 
