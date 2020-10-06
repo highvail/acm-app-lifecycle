@@ -82,16 +82,16 @@ Let's review some of the resources we will be using during this example:
 apiVersion: apps.open-cluster-management.io/v1
 kind: Channel
 metadata:
-  name: acm-app-lifecycle-blog
+  name: acm-app-lifecycle
   namespace: open-cluster-management
 spec:
   type: Git
-  pathname: https://github.com/zombiefish/acm-app-lifecycle-blog.git
+  pathname: https://github.com/zombiefish/acm-app-lifecycle.git
 ```
 
 The `Channel` we are defining is a `Git` type `Channel` that will be used by our subscriptions in order to get the Kubernetes resources that deploy our application.
 
-In this case, it is configured to get the Kubernetes resources from the Git repository at `github.com/zombiefish/acm-app-lifecycle-blog.git`. 
+In this case, it is configured to get the Kubernetes resources from the Git repository at `github.com/zombiefish/acm-app-lifecycle.git`. 
 
 **Namespace** 
 
@@ -140,7 +140,7 @@ metadata:
     apps.open-cluster-management.io/git-path: apps/reversewords/
     apps.open-cluster-management.io/git-branch: stage
 spec:
-  channel: open-cluster-management/acm-app-lifecycle-blog
+  channel: open-cluster-management/acm-app-lifecycle
   placement:
     placementRef:
       kind: PlacementRule
@@ -181,18 +181,18 @@ The `Application` will help us to create a topology view of our applications acr
 1.  First, we are going to create the `Channel` definition. 
 
     ```bash
-    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/base/00_channel.yaml
+    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle/master/acm-manifests/base/00_channel.yaml
     
     ```
 
-channel.apps.open-cluster-management.io/acm-app-lifecycle-blog created
+channel.apps.open-cluster-management.io/acm-app-lifecycle created
     ```
     
 2.  Next, create a `Namespace` for storing our application manifests. 
 
     ```bash
     oc --context hub create -f \
-    https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-stage/00_namespace.yaml
+    https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle/master/acm-manifests/reversewords-stage/00_namespace.yaml
 
     namespace/reverse-words-stage created
     ```
@@ -201,7 +201,7 @@ channel.apps.open-cluster-management.io/acm-app-lifecycle-blog created
 
     ```bash
     oc --context hub create -f \
-    https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-stage/01_placement_rule.yaml
+    https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle/master/acm-manifests/reversewords-stage/01_placement_rule.yaml
 
     placementrule.apps.open-cluster-management.io/development-clusters created
     ```
@@ -221,11 +221,11 @@ channel.apps.open-cluster-management.io/acm-app-lifecycle-blog created
 4.  The `Subscription` and the `Application` can be created now targeting the development clusters via the `PlacementRule`. 
 
     ```bash
-    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-stage/02_subscription-dev.yaml
+    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle/master/acm-manifests/reversewords-stage/02_subscription-dev.yaml
     
     subscription.apps.open-cluster-management.io/reversewords-dev-app-subscription created
 
-    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-stage/03_application-dev.yaml
+    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle/master/acm-manifests/reversewords-stage/03_application-dev.yaml
 
     application.app.k8s.io/reversewords-dev-app created
     ```
@@ -263,7 +263,7 @@ See the following `Subscription` status. Note that it says `propagated`, which m
 6.  To access the application on the network, we need to `expose` the service. Let's use the `service` we displayed from above.    
 
     ```bash
-    $ oc --context dev -n reverse-words-stage create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-stage/04_service-route.yaml
+    $ oc --context dev -n reverse-words-stage create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle/master/acm-manifests/reversewords-stage/04_service-route.yaml
     
     ```
 
@@ -303,7 +303,7 @@ route.route.openshift.io/reverse-words created
 
    
     ```bash
-    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-prod/00_namespace.yaml
+    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle/master/acm-manifests/reversewords-prod/00_namespace.yaml
     
     namespace/reverse-words-prod created
     ```
@@ -311,7 +311,7 @@ route.route.openshift.io/reverse-words created
 3. Now create a `PlacementRule` that matches our production clusters: 
 
     ```bash
-    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-prod/01_placement_rule.yaml
+    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle/master/acm-manifests/reversewords-prod/01_placement_rule.yaml
     
     placementrule.apps.open-cluster-management.io/production-clusters created
     ```
@@ -331,11 +331,11 @@ route.route.openshift.io/reverse-words created
 4. The `Subscription` and the `Application` can be created now targeting the production clusters via the `PlacementRule`. 
 
     ```bash
-    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-prod/02_subscription-pro.yaml
+    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle/master/acm-manifests/reversewords-prod/02_subscription-pro.yaml
     
     subscription.apps.open-cluster-management.io/reversewords-pro-app-subscription created
     
-    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-prod/03_application-pro.yaml
+    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle/master/acm-manifests/reversewords-prod/03_application-pro.yaml
     
     application.app.k8s.io/reversewords-pro-app created
     ```
@@ -374,7 +374,7 @@ See the following `Subscription` status. Note that it says `propagated`, which m
 6. We can now query our application and see that we deployed the production release.     
 
     ```bash
-    $ oc --context prod -n reverse-words-prod create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-prod/04_service-route.yaml
+    $ oc --context prod -n reverse-words-prod create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle/master/acm-manifests/reversewords-prod/04_service-route.yaml
     
     route.route.openshift.io/reverse-words created
     ```
@@ -434,10 +434,10 @@ We will update our  application definitions in Git in order to get the new appli
 
 > **NOTE**:We are just demonstrating the GitOps capabilities, we will push  our changes directly to the different branches, this **is not** a good practice, for real world use cases, there should be a  well-defined workflow for bringing new changes to the different  environments. You can read more about it [here](https://www.openshift.com/blog/introduction-to-gitops-with-openshift).
 
-1.  Go to our cloned Git repository. **NOTE**: If you are following the blog post in your environment, you should already have a fork from [this repository](https://github.com/zombiefish/acm-app-lifecycle-blog.git) cloned in your system 
+1.  Go to our cloned Git repository. **NOTE**: If you are following the blog post in your environment, you should already have a fork from [this repository](https://github.com/zombiefish/acm-app-lifecycle.git) cloned in your system 
 
     ```bash
-    cd /path/to/acm-app-lifecycle-blog/forked/repository/
+    cd /path/to/acm-app-lifecycle/forked/repository/
     ```
     
 2.  We want to upgrade the application version on `Development` in order to validate the release is working properly before pushing the change to `Production` environment, so we will be working on `stage` branch. 
@@ -519,7 +519,7 @@ We will update our  application definitions in Git in order to get the new appli
 1.  Go to our cloned Git repository.
 
     ```bash
-    cd /path/to/acm-app-lifecycle-blog/forked/repository/
+    cd /path/to/acm-app-lifecycle/forked/repository/
     ```
 
 2.  We already upgraded and validated the new application version on `Development`. This time we are going to make the required changes to get this new version to `Production` environment, so we will be working on `prod` branch.
@@ -602,7 +602,7 @@ We will create two new `PlacementRules` targeting clusters in the `EU` region an
 1.  Create a new `Namespace` to store the required manifests.
 
     ```bash
-    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-region/00_namespace.yaml
+    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle/master/acm-manifests/reversewords-region/00_namespace.yaml
     
     namespace/reverse-words-region created
     ```
@@ -611,12 +611,12 @@ We will create two new `PlacementRules` targeting clusters in the `EU` region an
 
     ```bash
     # PlacementRule targeting EU region clusters
-    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-region/01_placement_rule_EU.yaml
+    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle/master/acm-manifests/reversewords-region/01_placement_rule_EU.yaml
     
     placementrule.apps.open-cluster-management.io/eu-region-clusters created
     
     # PlacementRule targeting NA region clusters
-    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-region/02_placement_rule_NA.yaml
+    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle/master/acm-manifests/reversewords-region/02_placement_rule_NA.yaml
     
     placementrule.apps.open-cluster-management.io/na-region-clusters created
     ```
@@ -626,11 +626,11 @@ We will create two new `PlacementRules` targeting clusters in the `EU` region an
    > **NOTE**: The Subscription is currently configured to deploy the application using the `PlacementRule` matching clusters in EU region.
 
    ```bash
-   $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-region/03_subscription-region.yaml
+   $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle/master/acm-manifests/reversewords-region/03_subscription-region.yaml
    
    subscription.apps.open-cluster-management.io/reversewords-region-app-subscription created
        
-   $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-region/04_application-region.yaml
+   $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle/master/acm-manifests/reversewords-region/04_application-region.yaml
    
    application.app.k8s.io/reversewords-region-app created
    ```
@@ -653,7 +653,7 @@ We will create two new `PlacementRules` targeting clusters in the `EU` region an
 5.  Expose the service and test:
 
     ```bash
-    $ oc --context dev  -n reverse-words-region create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-prod/04_service-route.yaml
+    $ oc --context dev  -n reverse-words-region create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle/master/acm-manifests/reversewords-prod/04_service-route.yaml
     
     route.route.openshift.io/reverse-words created
     
@@ -774,7 +774,7 @@ This new `PlacementRule` will make sure that in case one of the clusters moves t
 1.  Let's create the `PlacementRule` discussed in the previous section.
 
     ```
-    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-region/05_placement_rule_DR.yaml
+    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle/master/acm-manifests/reversewords-region/05_placement_rule_DR.yaml
       
     placementrule.apps.open-cluster-management.io/na-eu-region-clusters created
     ```
