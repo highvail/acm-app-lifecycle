@@ -187,10 +187,11 @@ The `Application` will help us to create a topology view of our applications acr
 1.  First, we are going to create the `Channel` definition. 
 
     ```bash
-    oc --context hub create -f \
-    https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/base/00_channel.yaml
+    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/base/00_channel.yaml
+    
+    ```
 
-    channel.apps.open-cluster-management.io/acm-app-lifecycle-blog created
+channel.apps.open-cluster-management.io/acm-app-lifecycle-blog created
     ```
     
 2.  Next, create a `Namespace` for storing our application manifests. 
@@ -214,8 +215,7 @@ The `Application` will help us to create a topology view of our applications acr
     See the following `PlacementRule` status, note that it matched the managed development cluster named `okd4`: 
     
     ```bash
-    oc --context hub -n reverse-words-stage get placementrule \
-        development-clusters -o yaml
+    $ oc --context hub -n reverse-words-stage get placementrule development-clusters -o yaml
     
     <OMITTED_OUTPUT>
     status:
@@ -223,39 +223,35 @@ The `Application` will help us to create a topology view of our applications acr
       - clusterName: okd4
         clusterNamespace: okd4
     ```
-
+    
 4.  The `Subscription` and the `Application` can be created now targeting the development clusters via the `PlacementRule`. 
 
     ```bash
-    oc --context hub create -f https://raw.githubusercontent.com/zombiefish/\ 
-        acm-app-lifecycle-blog/master/acm-manifests/reversewords-\
-        stage/02_subscription-dev.yaml
-
+    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-stage/02_subscription-dev.yaml
+    
     subscription.apps.open-cluster-management.io/reversewords-dev-app-subscription created
 
-    oc --context hub create -f https://raw.githubusercontent.com/zombiefish/\
-        acm-app-lifecycle-blog/master/acm-manifests/reversewords-\
-        stage/03_application-dev.yaml
+    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-stage/03_application-dev.yaml
 
     application.app.k8s.io/reversewords-dev-app created
     ```
     
-    See the following `Subscription` status. Note that it says `propagated`, which means the Subscription has been sent to the destination cluster: 
 
-    ```bash
-    oc --context hub -n reverse-words-stage get subscription \
-        reversewords-dev-app-subscription -o yaml
+See the following `Subscription` status. Note that it says `propagated`, which means the Subscription has been sent to the destination cluster: 
     
-    <OMITTED_OUTPUT>
+    ```bash
+    oc --context hub -n reverse-words-stage get subscription reversewords-dev-app-subscription -o yaml
+
+<OMITTED_OUTPUT>
     status:
       lastUpdateTime: "2020-10-05T15:32:00Z"
       phase: Propagated 
     ```
-
-5.  If we look at the development cluster, we will see our application up and running.
+    
+5.  If we look at the development cluster, we will see that our application is up and running.
 
     ```bash
-    oc --context dev -n reverse-words-stage get deployments,services,pods,routes
+    $ oc --context dev -n reverse-words-stage get deployments,services,pods
 
     NAME                            READY   UP-TO-DATE   AVAILABLE   AGE
     deployment.apps/reverse-words   1/1     1            1           75s
@@ -268,17 +264,31 @@ The `Application` will help us to create a topology view of our applications acr
 
     ```
 
-    At this point, we cannot access the application.
+    At this point, although the application is up, we cannot access the application.
 
 6.  To access the application on the network, we need to `expose` the service. Let's use the `service` we displayed from above.    
 
     ```bash
-    oc --context dev -n reverse-words-stage expose service/reverse-words
+    $ oc --context dev -n reverse-words-stage create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-stage/04_service-route.yaml
+    
     ```
 
-    If we run the same query against production cluster we will see that there is no application running there 
+route.route.openshift.io/reverse-words created
+    ```
+    
+    Let's get the address of the route we just created:
+    
     ```bash
-    oc --context prod-n reverse-words-stage get deployments,services,pods
+    $ oc --context dev -n reverse-words-stage get route
+    
+    NAME            HOST/PORT                                                 PATH   SERVICES        PORT   TERMINATION   WILDCARD
+    reverse-words   reverse-words-reverse-words-stage.apps.okd.highvail.com          reverse-words   http                 None
+    ```
+    
+    If we run the same query against production cluster we will see that there is no application running there 
+    
+    ```bash
+    $ oc --context prod -n reverse-words-stage get deployments,services,pods
     
     No resources found in reverse-words-stage namespace.
     ```
@@ -286,12 +296,11 @@ The `Application` will help us to create a topology view of our applications acr
     We can now query our application and see that we deployed the staging release: 
     
     ```bash
-    curl http://$(oc --context dev -n reverse-words-stage get service \
-       reverse-words jsonpath='{.status.loadBalancer.ingress[0].hostname}'):8080
-       
+    $ curl http://reverse-words-reverse-words-stage.apps.okd.highvail.com
+    
     Reverse Words Release: Stage Release v0.0.3. App version: v0.0.3
     ```
-    
+
 ### Deploying the application to the production environment
 
 1.  We don't need to create a new `Channel`, since we will be using the same source Git repository, but a different branch.
@@ -300,24 +309,23 @@ The `Application` will help us to create a topology view of our applications acr
 
    
     ```bash
-    oc --context hub create -f https://raw.githubusercontent.com/zombiefish/\
-        acm-app-lifecycle-blog/master/acm-manifests/reversewords-\
-        prod/00_namespace.yaml`
+    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-prod/00_namespace.yaml
+    
+    namespace/reverse-words-prod created
     ```
 
 3. Now create a `PlacementRule` that matches our production clusters: 
 
     ```bash
-    oc --context hub create -f https://raw.githubusercontent.com/zombiefish/\
-        acm-app-lifecycle-blog/master/acm-manifests/reversewords-\
-        prod/01_placement_rule.yaml
+    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-prod/01_placement_rule.yaml
+    
+    placementrule.apps.open-cluster-management.io/production-clusters created
     ```
     
     See the following `PlacementRule` status. Note that it matched the managed production cluster named, `ocp45`.
         
     ```bash
-    oc --context hub -n reverse-words-prod get placementrule \
-        production-clusters -o yaml
+    $ oc --context hub -n reverse-words-prod get placementrule production-clusters -o yaml
         
     <OMITTED_OUTPUT>
     status:
@@ -325,74 +333,87 @@ The `Application` will help us to create a topology view of our applications acr
       - clusterName: ocp45
         clusterNamespace: ocp45
     ```
-
+    
 4. The `Subscription` and the `Application` can be created now targeting the production clusters via the `PlacementRule`. 
 
     ```bash
-    oc --context hub create -f https://raw.githubusercontent.com/zombiefish/\
-        acm-app-lifecycle-blog/master/acm-manifests/reversewords-\
-        prod/02_subscription-pro.yaml
-    oc --context hub create -f https://raw.githubusercontent.com/zombiefish/\
-        acm-app-lifecycle-blog/master/acm-manifests/reversewords-\
-        prod/03_application-pro.yaml
+    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-prod/02_subscription-pro.yaml
+    
+    subscription.apps.open-cluster-management.io/reversewords-pro-app-subscription created
+    
+    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-prod/03_application-pro.yaml
+    
+    application.app.k8s.io/reversewords-pro-app created
     ```
-
-    See the following `Subscription` status. Note that it says `propagated`, which means the `Subscription` has been sent to the destination cluster: 
-
+```
+    
+See the following `Subscription` status. Note that it says `propagated`, which means the `Subscription` has been sent to the destination cluster: 
+   
    ```bash
-    oc --context hub -n reverse-words-prod get subscription \
-        reversewords-pro-app-subscription -o yaml
+   $ oc --context hub -n reverse-words-prod get subscription reversewords-pro-app-subscription -o yaml
         
     <OMITTED_OUTPUT>
     status:
       message: Active
       phase: Propagated
 
-   ```
+```
 
 5. Finally, if we look at the production cluster, we will see our application up and running.
 
     ```bash
-    oc --context prod-n reverse-words-prod get deployments,services,pods
+    $ oc --context prod -n reverse-words-prod get deployments,services,pods
     
-    NAME                               READY  UP-TO-DATE AVAILABLE   AGE
-    deployment.extensions/reverse-words 1/1      1          1        93s
-    NAME               TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)  AGE
-    service/reverse-words   LoadBalancer   172.30.100.0   a6067d9a2cd904003a1b53b65f9e1cb3-450574743.na-west-2.elb.amazonaws.com   8080:30293/TCP   96s
-    NAME                               READY   STATUS    RESTARTS    AGE
-    pod/reverse-words-7dd94446c-vkzr8   1/1     Running   0          94s` 
+    NAME                                 READY   STATUS    RESTARTS   AGE
+    pod/reverse-words-646456cd7c-5lss4   1/1     Running   0          102s
+    
+    NAME                    TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+    service/reverse-words   LoadBalancer   172.30.69.224   <pending>     8080:31860/TCP   102s
+    
+    NAME                            READY   UP-TO-DATE   AVAILABLE   AGE
+    deployment.apps/reverse-words   1/1     1            1           102s
+    
+    NAME                                       DESIRED   CURRENT   READY   AGE
+    replicaset.apps/reverse-words-646456cd7c   1         1         1       102s 
     ```
 
-6. We can now query our application and see that we deployed the production release. 
+6. We can now query our application and see that we deployed the production release.     
 
     ```bash
-    curl http://$(oc --context prod-n reverse-words-prod get service \
-        reverse-words -o \ 
-        jsonpath='{.status.loadBalancer.ingress[0].hostname}'):8080
-        
-    Reverse Words Release: Production release v0.0.2.
-    App version: v0.0.2
-    ​```bash 
+    $ oc --context prod -n reverse-words-prod create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-prod/04_service-route.yaml
+    
+    route.route.openshift.io/reverse-words created
+    ```
+
+    Let's get the address of the route we just created:
+
+    ```bash
+    $ oc --context prod -n reverse-words-prod get route
+    
+    NAME            HOST/PORT                                                PATH   SERVICES        PORT   TERMINATION   WILDCARD
+    reverse-words   reverse-words-reverse-words-prod.apps.ocp.highvail.com          reverse-words   http                 None
+    ```
+
+    We can now query our application and see that we deployed the staging release: 
+
+    ```bash
+    $ curl http://reverse-words-reverse-words-prod.apps.ocp.highvail.com
+    
+    Reverse Words Release: Production release v0.0.2. App version: v0.0.2
     ```
 
 7. Now we have different versions of our application, depending on the environment we are deploying to: 
 
     ```bash
     # Query development environment
-    curl http://$(oc --context dev -n reverse-words-stage get service \
-    reverse-words -o \
-    jsonpath='{.status.loadBalancer.ingress[0].hostname}'):8080
-    # Query production environment
-    curl http://$(oc --context prod-n reverse-words-prod get service \
-    reverse-words -o \
-    jsonpath='{.status.loadBalancer.ingress[0].hostname}'):8080
+    $ curl http://reverse-words-reverse-words-stage.apps.okd.highvail.com
     
-    # Dev Query
-    Reverse Words Release: Stage Release v0.0.3.
-    App version: v0.0.3
-    # Pro Query
-    Reverse Words Release: Production release v0.0.2.
-    App version: v0.0.2
+    Reverse Words Release: Stage Release v0.0.3. App version: v0.0.3
+    
+    # Query production environment
+    $ curl http://reverse-words-reverse-words-prod.apps.ocp.highvail.com
+    
+    Reverse Words Release: Production release v0.0.2. App version: v0.0.2
     ```
 
 Finally, let's take a look in the web console: 
@@ -403,37 +424,21 @@ ACM Applications General View
 
 ACM Development Application View
 
-![ACM Development Application View](artifacts/acmDevelopmentAppkicationView.png) 
+![ACM Development Application View](artifacts/acmDevelopmentApplocationView.png)
 
 ---
 
 ## Part 2 - Blue/Green Deployments
 
-**What does it mean to manage your apps with Red Hat Advanced Cluster Management?** In part one, we introduced the basic concepts for Application  Lifecycle on Red Hat Advanced Cluster Management and deployed an  application to multiple clusters. 
-
-### Git Repository
-
-We are using the same Git repository from part one.
-
-|Branch|Description|
-|:--|:--|
-|`config`|Stores the base files for our applications that apply to every environment|
-|`prod`|Stores the overlay files for our applications that apply to production environments|
-|`stage`|Stores the overlay files for our applications that apply to staging environments|
-
 ### Blue / Green Deployments on Red Hat Advanced Cluster Management
-
-In part one, we deployed our application to multiple environments, being those `Development` and `Production`. 
 
 At this point, we have our Application running `v0.0.3` on `Development` and `v0.0.2` on `Production`. The development team has just released the version `v0.0.4` and we want to perform a blue green deployment to `Development` and `Production` using Advanced Cluster Management and its GitOps capabilities.
 
-If you remember, we already have the required `Channel`, `PlacementRules`, `Subscriptions` and `Applications` created in Advanced Cluster Management, which means that we only need  to work with Git in order to deploy this new application version to both clusters.
-
 #### Upgrading the application on the development environment
 
-As stated before, we already  have all the required resources in place, we only need to update our  application definitions in Git in order to get the new application  version to the different environments. 
+We will update our  application definitions in Git in order to get the new application  version to the different environments. 
 
-> **NOTE**: In this blog  post, as we're just demonstrating the GitOps capabilities, we will push  our changes directly to the different branches, this **is not** a good practice, for real world use cases, there should be a  well-defined workflow for bringing new changes to the different  environments. You can read more about it [here](https://www.openshift.com/blog/introduction-to-gitops-with-openshift).
+> **NOTE**:We are just demonstrating the GitOps capabilities, we will push  our changes directly to the different branches, this **is not** a good practice, for real world use cases, there should be a  well-defined workflow for bringing new changes to the different  environments. You can read more about it [here](https://www.openshift.com/blog/introduction-to-gitops-with-openshift).
 
 1.  Go to our cloned Git repository. **NOTE**: If you are following the blog post in your environment, you should already have a fork from [this repository](https://github.com/zombiefish/acm-app-lifecycle-blog.git) cloned in your system 
 
@@ -458,15 +463,12 @@ As stated before, we already  have all the required resources in place, we only 
 4.  Before committing the change, we are going to review the current state of our application in the `development` cluster. 
 
     ```bash
-    curl http://$(oc --context dev -n reverse-words-stage get service reverse-words \
-    -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'):8080
+    $ curl http://reverse-words-reverse-words-stage.apps.okd.highvail.com
+    
+    Reverse Words Release: Stage Release v0.0.3. App version: v0.0.3
     ```
     
     As you can see, v0.0.3 is the current version running in our `Development` environment 
-    
-    ```bash
-    Reverse Words Release: Stage Release v0.0.3. App version: v0.0.3
-    ```
     
 5.  Commit the file and push it to `stage` branch.
 
@@ -487,25 +489,30 @@ As stated before, we already  have all the required resources in place, we only 
     You can see how the change has been detected and a new version of the pod is being deployed with the new version.
     
     ```bash
-    NAME                             READY   STATUS              RESTARTS
-    AGEreverse-words-5ff744d4bd-kkfvn   0/1     ContainerCreating   0          3s
-    reverse-words-68b9b894dd-jfgpf   1/1     Running             0          109m
+    NAME                             READY   STATUS    RESTARTS   AGE
+    reverse-words-6dfc7b864b-g5klg   1/1     Running   0          18m
+    reverse-words-7575fbf54b-g4qsc   0/1     Running   0          11s
+    
+    NAME                             READY   STATUS        RESTARTS   AGE
+    reverse-words-6dfc7b864b-g5klg   0/1     Terminating   0          19m
+    reverse-words-7575fbf54b-g4qsc   1/1     Running       0          27s
+    
+    NAME                             READY   STATUS    RESTARTS   AGE
+    reverse-words-7575fbf54b-g4qsc   1/1     Running   0          35s
     ```
     
 7.  We can now query our application and see that we deployed the v0.0.4 release.
 
     ```bash
-    curl http://$(oc --context dev -n reverse-words-stage get service reverse-words\
-    -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'):8080
+    $ curl http://reverse-words-reverse-words-stage.apps.okd.highvail.com
     
     Reverse Words Release: Stage Release v0.0.4. App version: v0.0.4
     ```
-
+    
 8.  We also keep the production release untouched.
 
     ```bash
-    curl http://$(oc --context prod-n reverse-words-prod get service reverse-words\
-    -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'):8080
+    $ curl http://reverse-words-reverse-words-prod.apps.ocp.highvail.com
     
     Reverse Words Release: Production release v0.0.2. App version: v0.0.2
     ```
@@ -536,16 +543,13 @@ As stated before, we already  have all the required resources in place, we only 
 4.  Before committing the change, we are going to review the current state of our application in the `production` cluster.
 
     ```bash
-    curl http://$(oc --context prod-n reverse-words-prod get service reverse-words -o \
-    jsonpath='{.status.loadBalancer.ingress[0].hostname}'):8080
-    ```
+    $ curl http://reverse-words-reverse-words-prod.apps.ocp.highvail.com
+    
+    Reverse Words Release: Production release v0.0.2. App version: v0.0.2
+   ```
    
-    As you can see, v0.0.3 is the current version running in our Development environment
+   As you can see, v0.0.2 is the current version running in our `production` environment
    
-    ```bash
-    Reverse Words Release: Stage Release v0.0.2. App version: v0.0.2
-    ```
-
 5.  Commit the file and push it to `prod` branch. 
 
     > **NOTE**: As a reminder, this **is not** a good practice, real world use cases should follow a well-defined workflow 
@@ -556,28 +560,37 @@ As stated before, we already  have all the required resources in place, we only 
     git push origin prod
     ```
 
-6.  We already have the required `Subscription` in place, that means that after Advanced Cluster Management detects the new commit in our repository and branch, the product will go ahead and  make the required changes to move the current state to the desired state defined in Git. 
+6. We already have the required `Subscription` in place, that means that after Advanced Cluster Management detects the new commit in our repository and branch, the product will go ahead and  make the required changes to move the current state to the desired state defined in Git. 
 
-    ```bash
-    oc --context prod-n reverse-words-prod get pods
-    ```
-    You can see how the change has been detected and a new version of the pod is being deployed with the new version.
+   ```bash
+   oc --context prod-n reverse-words-prod get pods
+   ```
+   You can see how the change has been detected and a new version of the pod is being deployed with the new version.
 
-    ```bash
-    NAME                             READY   STATUS              RESTARTS   AGE
-    reverse-words-68795d69ff-6t4c7   0/1     ContainerCreating   0          5s
-    reverse-words-7dd94446c-vkzr8    1/1     Running             0          115m
-    ```
+   ```bash
+   NAME                             READY   STATUS    RESTARTS   AGE
+   reverse-words-646456cd7c-5lss4   1/1     Running   0          18m
+   
+   NAME                             READY   STATUS              RESTARTS   AGE
+   reverse-words-646456cd7c-5lss4   1/1     Running             0          18m
+   reverse-words-b44c6745c-zq6mr    0/1     ContainerCreating   0          3s
+   
+   NAME                             READY   STATUS    RESTARTS   AGE
+   reverse-words-646456cd7c-5lss4   1/1     Running   0          18m
+   reverse-words-b44c6745c-zq6mr    0/1     Running   0          10s
+   
+   NAME                            READY   STATUS    RESTARTS   AGE
+   reverse-words-b44c6745c-zq6mr   1/1     Running   0          30s
+   ```
 
 7.  We can now query our application and see that we deployed the v0.0.4 release.
 
     ```bash
-    curl http://$(oc --context prod-n reverse-words-prod get service reverse-words -o \
-    jsonpath='{.status.loadBalancer.ingress[0].hostname}'):8080
+    $ curl http://reverse-words-reverse-words-prod.apps.ocp.highvail.com
     
-    Reverse Words Release: Production Release v0.0.4. App version: v0.0.4
+    Reverse Words Release: Production release v0.0.4. App version: v0.0.4
     ```
-
+    
 8.   At this point, we have upgraded the reverse-words application version to v0.0.4 in `Development` and `Production` environments.
 
 ---
@@ -586,9 +599,7 @@ As stated before, we already  have all the required resources in place, we only 
 
 ### Application Migration on Advanced Cluster Management 
 
-In the previous post we upgraded the version of our application in `Development` and `Production` clusters using Blue/Green deployment technique.
-
-Now, we are going to explore how Red Hat Advanced Cluster Management enables us to seamlessly move our  applications between our different clusters.
+Next, we are going to explore how Red Hat Advanced Cluster Management enables us to seamlessly move our  applications between our different clusters.
 
 #### Creating new PlacementRules and Subscription
 
@@ -597,60 +608,80 @@ We will create two new `PlacementRules` targeting clusters in the `EU` region an
 1.  Create a new `Namespace` to store the required manifests.
 
     ```bash
-    oc --context hub create -f \
-        https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog\
-        /master/acm-manifests/reversewords-region/00_namespace.yaml
+    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-region/00_namespace.yaml
+    
+    namespace/reverse-words-region created
     ```
     
 2.  Create the required `PlacementRules` targeting clusters located in `EU` and `NA` regions.
 
     ```bash
     # PlacementRule targeting EU region clusters
-    oc --context hub create -f \
-        https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/\
-        master/acm-manifests/reversewordsregion/\
-        01_placement_rule_EU.yaml
+    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-region/01_placement_rule_EU.yaml
+    
+    placementrule.apps.open-cluster-management.io/eu-region-clusters created
+    
     # PlacementRule targeting NA region clusters
-    oc --context hub create -f \
-        https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/\
-        master/acm-manifests/reversewords-region/\
-        02_placement_rule_NA.yaml`
+    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-region/02_placement_rule_NA.yaml
+    
+    placementrule.apps.open-cluster-management.io/na-region-clusters created
     ```
     
-3.  Create the `Subscription` and `Application`. 
+3. Create the `Subscription` and `Application`. 
 
-    > **NOTE**: The Subscription is currently configured to deploy the application using the `PlacementRule` matching clusters in EU region.
+   > **NOTE**: The Subscription is currently configured to deploy the application using the `PlacementRule` matching clusters in EU region.
 
-    ```bash
-    oc --context hub create -f https://raw.githubusercontent.com/zombiefish/\
-        acm-app-lifecycle-blog/master/acm-manifests/\
-        reversewords-region/03_subscription-region.yaml
-    oc --context hub create -f https://raw.githubusercontent.com/zombiefish/\
-        acm-app-lifecycle-blog/master/acm-manifests/\
-        reversewords-region/04_application-region.yaml
-    ```
+   ```bash
+   $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-region/03_subscription-region.yaml
+   
+   subscription.apps.open-cluster-management.io/reversewords-region-app-subscription created
+       
+   $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-region/04_application-region.yaml
+   
+   application.app.k8s.io/reversewords-region-app created
+   ```
 
 4.  Now, we should see our application running in the cluster located in EU (which is our `Development` cluster).
 
     ```bash
-    oc --context dev -n reverse-words-region get deployments,services,pods
+    $ oc --context dev -n reverse-words-region get deployments,services,pods
     
-    NAME                                  READY   UP-TO-DATE   AVAILABLE   AGE
-    deployment.extensions/reverse-words   1/1     1            1           4m39s
-    NAME         TYPE     CLUSTER-IP      EXTERNAL-IP              PORT(S)          AGE
-    service/reverse-words   LoadBalancer   172.30.79.111   a3115b78bce924ddc885d2b7dab766a6-1199935412.eu-central-1.elb.amazonaws.com   8080:30254/TCP   4m39s
-    NAME                                 READY   STATUS    RESTARTS   AGE
-    pod/reverse-words-68795d69ff-xmwc6   1/1     Running   0          4m39s
+    NAME                            READY   UP-TO-DATE   AVAILABLE   AGE
+    deployment.apps/reverse-words   1/1     1            1           30s
+    
+    NAME                    TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+    service/reverse-words   LoadBalancer   172.30.11.162   <pending>     8080:32345/TCP   30s
+    
+    NAME                                READY   STATUS    RESTARTS   AGE
+    pod/reverse-words-b44c6745c-rg2kt   1/1     Running   0          30s
     ```
     
-5.  Run the same query against the cluster located in NA (`Production` cluster). See that we don't have any pods running.
+5.  Expose the service and test:
 
     ```bash
-    oc --context prod-n reverse-words-region get deployments,services,pods
+    $ oc --context dev  -n reverse-words-region create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-prod/04_service-route.yaml
     
-    No resources found in reverse-words-region namespace.
+    route.route.openshift.io/reverse-words created
+    
+    $ oc --context dev  -n reverse-words-region get route
+    NAME            HOST/PORT                                                  PATH   SERVICES        PORT   TERMINATION   WILDCARD
+    reverse-words   reverse-words-reverse-words-region.apps.okd.highvail.com          reverse-words   http                 None
+    
+    $ curl http://reverse-words-reverse-words-region.apps.okd.highvail.com
+    
+    Reverse Words Release: Production release v0.0.4. App version: v0.0.4
     ```
     
+    
+    
+6. Run the same query against the cluster located in NA (`Production` cluster). See that we don't have any pods running.
+
+   ```bash
+   oc --context prod-n reverse-words-region get deployments,services,pods
+   
+   No resources found in reverse-words-region namespace.
+   ```
+
 ### Migrating our Application
 
 Let's say that due to some  law enforcement, our application cannot run on EU servers anymore and we need to move it to NA-based servers. We can do that with a single  command. If you remember, we created two `PlacementRules`, one matching `EU` servers and another matching `NA` servers. We will patch our `Subscription` so it stops using `EU` based servers `PlacementRule` and starts using `NA` based servers `PlacementRule`. 
@@ -660,18 +691,17 @@ Changing the `PlacementRule` used by our `Subscription` will move our applicatio
 1.  Patch the `Subscription`. The following patch updates the `PlacementRule` used by the `Subscription` to `na-region-clusters`.
 
     ```bash
-    oc --context hub -n reverse-words-region patch \
-       subscription.apps.open-cluster-management.io/reversewords-region-app-subscription \
-       -p '{"spec":{"placement":{"placementRef":{"name":"naregion-clusters"}}}}' \
-       --type=merge
-   ```
+    $ oc --context hub -n reverse-words-region patch subscription.apps.open-cluster-management.io/reversewords-region-app-subscription -p '{"spec":{"placement":{"placementRef":{"name":"na-region-clusters"}}}}' --type=merge
+    
+    subscription.apps.open-cluster-management.io/reversewords-region-app-subscription patched
+    ```
    
 2. Our application will be moved from `EU` cluster to `NA` cluster automatically. See the commands and outputs: 
 
     The application will not run on `EU` (`development` cluster) anymore. 
     
     ```bash
-    oc --context dev -n reverse-words-region get deployments,services,pods
+    $ oc --context dev -n reverse-words-region get deployments,services,pods
     
     No resources found in reverse-words-region namespace.
     ```
@@ -679,17 +709,28 @@ Changing the `PlacementRule` used by our `Subscription` will move our applicatio
     The application will be running on `NA` (`production` cluster) now. 
     
     ```bash
-    oc --context prod-n reverse-words-region get deployments,services,pods
+    $ oc --context prod-n reverse-words-region get deployments,services,pods
     
-    NAME                                  READY   UP-TO-DATE   AVAILABLE   AGE
-    deployment.extensions/reverse-words   1/1     1            1           92s
-    NAME         TYPE       CLUSTER-IP       EXTERNAL-IP      PORT(S)      AGE
-    service/reverse-words   LoadBalancer   172.30.177.196   a90273a7fa3ea4015989fac522b6b36e-709976322.nawest-2.elb.amazonaws.com   8080:30375/TCP   2m33s
-    NAME                                 READY   STATUS    RESTARTS   AGE
-    pod/reverse-words-68795d69ff-jlktw   1/1     Running   0          92s
+    NAME                            READY   UP-TO-DATE   AVAILABLE   AGE
+    deployment.apps/reverse-words   1/1     1            1           31s
+    
+    NAME                    TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
+    service/reverse-words   LoadBalancer   172.30.245.249   <pending>     8080:30862/TCP   31s
+    
+    NAME                                READY   STATUS    RESTARTS   AGE
+    pod/reverse-words-b44c6745c-q2mxl   1/1     Running   0          32s
     ```
     
     As you just saw, by using `PlacementRules` you can migrate your applications between clusters easily. We just used a region-based `PlacementRule`, but the `PlacementRule` can be based on any labels configured on your clusters.
+    
+3.  Add the route and test.
+
+    ```bash
+    $ curl http://reverse-words-reverse-words-region.apps.ocp.highvail.com
+    
+    Reverse Words Release: Production release v0.0.4. App version: v0.0.4
+    ```
+
     
 
 ---
@@ -738,88 +779,89 @@ This new `PlacementRule` will make sure that in case one of the clusters moves t
 
 ### CONFIGURING SUBSCRIPTION TO USE THE NEW PLACEMENTRULE
 
-1. Let's create the `PlacementRule` discussed in the previous section.
+1.  Let's create the `PlacementRule` discussed in the previous section.
 
-   ```
-   oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-region/05_placement_rule_DR.yaml
-   ```
-
-   > If we look at the clusters reported by the PlacementRule, we will only see one cluster (`Production` in this case).
-
-   ```
-   oc --context hub -n reverse-words-region get placementrule naeu-region-clusters -o yaml
-   ```
-
-   ```
-   <OMITTED_OUTPUT>
-   status:
-     decisions:
-     - clusterName: okd4
-       clusterNamespace: okd4
-   ```
-
-2. Now we can go ahead and update the Subscription we used in the previous blog post. We are going to patch it to use the new `PlacementRule` we just created.
-
-   ```
-   oc --context hub -n reverse-words-region patch subscription.apps.open-cluster-management.io/reversewords-region-app-subscription -p '{"spec":{"placement":{"placementRef":{"name":"naeu-region-clusters"}}}}' --type=merge
-   ```
-
-3. The application will run in `EU` cluster (`Development`). See the following commands and output:
-
-   ```
-   oc --context dev -n reverse-words-region get deployments,services,pods
-   ```
-
-   ```
-   NAME                                  READY   UP-TO-DATE   AVAILABLE   AGE
-   deployment.extensions/reverse-words   1/1     1            1           42s
-   
-   NAME                    TYPE           CLUSTER-IP      EXTERNAL-IP                                                                PORT(S)          AGE
-   service/reverse-words   LoadBalancer   172.30.185.94   a520ed21ff982452abeacf63b0b58cc5-31012041.eu-central-1.elb.amazonaws.com   8080:32283/TCP   42s
-   
-   NAME                                 READY   STATUS    RESTARTS   AGE
-   pod/reverse-words-68795d69ff-crzqp   1/1     Running   0          42s
-   ```
-
-4. Now, I'm going to destroy my `EU` cluster in order to simulate a disaster; let's see what happens.
-
-   > **NOTE**: We actually destroyed the cluster, if you want to try this without destroying your cluster, you can remove the `region: EU`label from the cluster
-
-   1. As soon as Red Hat Advanced Cluster Management detects my `EU` cluster is gone, the `PlacementRule` gets updated and now it points to the `NA` cluster.
-
-      ```
-      oc --context hub -n reverse-words-region get placementrule naeu-region-clusters -o yaml
-      ```
-
-      > The `PlacementRule` now points to `NA` cluster.
-
-      ```
-      <OMITTED_OUTPUT>
-      status:
-        decisions:
-        - clusterName: ocp45
-          clusterNamespace: ocp45
-      ```
-
-   2. The application has been moved automatically to the `NA` cluster.
-
-      ```
-      oc --context prod-n reverse-words-region get deployments,services,pods
-      ```
-
-      ```
-      NAME                                  READY   UP-TO-DATE   AVAILABLE   AGE
-      deployment.extensions/reverse-words   1/1     1            1           76s
+    ```
+    $ oc --context hub create -f https://raw.githubusercontent.com/zombiefish/acm-app-lifecycle-blog/master/acm-manifests/reversewords-region/05_placement_rule_DR.yaml
       
-      NAME                    TYPE           CLUSTER-IP       EXTERNAL-IP                                                               PORT(S)          AGE
-      service/reverse-words   LoadBalancer   172.30.187.142   a1c7d218d901c40ac98375f4a9474084-1310645059.nawest-2.elb.amazonaws.com   8080:31095/TCP   78s
-      
-      NAME                                 READY   STATUS    RESTARTS   AGE
-      pod/reverse-words-68795d69ff-ttzz5   1/1     Running   0          77s
-      ```
+    placementrule.apps.open-cluster-management.io/na-eu-region-clusters created
+    ```
 
-   3. The `EU` cluster is gone.
+    > If we look at the clusters reported by the PlacementRule, we will only see one cluster (`Production` in this case).
 
-      [![eu-cluster-gone](https://www.openshift.com/hubfs/eu-cluster-gone.png)![eu-cluster-gone](https://www.openshift.com/hs-fs/hubfs/eu-cluster-gone.png?width=632&name=eu-cluster-gone.png)](https://www.openshift.com/sysdeseng/pit-hybrid/-/raw/master/blogposts/acm/assets/eu-cluster-gone.png)
+    ```bash
+    $ oc --context hub -n reverse-words-region get placementrule na-eu-region-clusters -o yaml
 
-5. When the `EU` cluster is online again, it will get added to the `PlacementRule` again automatically
+    <OMITTED_OUTPUT>
+    status:
+      decisions:
+      - clusterName: okd4
+        clusterNamespace: okd4
+    ```
+
+2.  Now we can go ahead and update the Subscription we used in the previous blog post. We are going to patch it to use the new `PlacementRule` we just created.
+
+    ```bash
+    $ oc --context hub -n reverse-words-region patch subscription.apps.open-cluster-management.io/reversewords-region-app-subscription -p '{"spec":{"placement":{"placementRef":{"name":"na-eu-region-clusters"}}}}' --type=merge
+
+    subscription.apps.open-cluster-management.io/reversewords-region-app-subscription patched
+    ```
+
+3.  The application will run in `EU` cluster (`Development`). See the following commands and output:
+
+    ```bash
+    $ oc --context dev -n reverse-words-region get deployments,services,pods
+
+    NAME                            READY   UP-TO-DATE   AVAILABLE   AGE
+    deployment.apps/reverse-words   1/1     1            1           35s
+
+    NAME                    TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+    service/reverse-words   LoadBalancer   172.30.67.186   <pending>     8080:31377/TCP   35s
+
+    NAME                                READY   STATUS    RESTARTS   AGE
+    pod/reverse-words-b44c6745c-5bxdt   1/1     Running   0          34s
+    ```
+   
+4.  Now, we are going to destroy my `EU` cluster in order to simulate a disaster; let's see what happens.
+
+    > **NOTE**: We powered off the cluster, if you want to try this without destroying your cluster, you can remove the `region: EU` label from the cluster
+
+    1.  As soon as Red Hat Advanced Cluster Management detects my `EU` cluster is gone, the `PlacementRule` gets updated and now it points to the `NA` cluster.
+
+        ```bash
+        $ oc --context hub -n reverse-words-region get placementrule na-eu-region-clusters -o yaml
+        ```
+
+        > The `PlacementRule` now points to `NA` cluster.
+
+        ```bash
+        <OMITTED_OUTPUT>
+        status:
+          decisions:
+          - clusterName: ocp45
+            clusterNamespace: ocp45
+        ```
+
+    2.  The application has been moved automatically to the `NA` cluster.
+    
+        ```bash
+        $ oc --context prod-n reverse-words-region get deployments,services,pods
+    
+        NAME                            READY   UP-TO-DATE   AVAILABLE   AGE
+        deployment.apps/reverse-words   1/1     1            1           46s
+    
+        NAME                    TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+        service/reverse-words   LoadBalancer   172.30.79.192   <pending>     8080:32106/TCP   46s
+    
+        NAME                                READY   STATUS    RESTARTS   AGE
+        pod/reverse-words-b44c6745c-xjqsz   1/1     Running   0          45s
+        ```
+    
+    3.  The `EU` cluster is gone.
+
+        ![Failing the EU Cluster](artifacts/ocpFailedNode.png)
+
+    4.  When the `EU` cluster is online again, it will get added to the `PlacementRule` again automatically.
+
+        ![Restored Node](artifacts/ocpRestoredNode.png)
+
