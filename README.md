@@ -2,9 +2,7 @@
 
 ## Part 1 - Deploying an Application to Multiple Environments
 
-September 28, 2020 | by Mario Vázquez 
-
-https://www.openshift.com/blog/applications-here-applications-there-part-1-deploying-an-application-to-multiple-environments
+> Based on the work of Mario Vázquez [source](https://www.openshift.com/blog/applications-here-applications-there-part-1-deploying-an-application-to-multiple-environments)
 
 What does it mean to manage your apps with Red Hat Advanced Cluster Management? 
 
