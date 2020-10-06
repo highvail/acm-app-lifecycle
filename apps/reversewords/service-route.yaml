@@ -5,4 +5,7 @@ metadata:
 spec:
   to:
     kind: Service
-    name: frontend
+    name: reverse-words
+    weight: 100
+  port:
+    targetPort: http
