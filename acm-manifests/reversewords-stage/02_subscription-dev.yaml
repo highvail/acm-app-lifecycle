@@ -9,7 +9,7 @@ metadata:
     apps.open-cluster-management.io/git-path: apps/reversewords/
     apps.open-cluster-management.io/git-branch: stage
 spec:
-  channel: open-cluster-management/acm-app-lifecycle-blog
+  channel: open-cluster-management/acm-app-lifecycle
   placement:
     placementRef:
       kind: PlacementRule
