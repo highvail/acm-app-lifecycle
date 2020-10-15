@@ -239,70 +239,62 @@ export DEMO="https://raw.githubusercontent.com/
 1. First, create the Channel definition to be used by the Application throught the entire demonstration.
 
     ```bash
-    oc --context hub create \
-        -f $DEMO/base/00_channel.yaml
-
-    channel.apps.open-cluster-management.io/acm-app-lifecycle created
+    oc --context hub create -f $DEMO/base/00_channel.yaml
+    
+channel.apps.open-cluster-management.io/acm-app-lifecycle created
     ```
-
+    
 1. Next, create a Namespace for storing the application manifests within the development environment.
 
     ```bash
-    oc --context hub create \
-        -f $DEMO/reversewords-stage/00_namespace.yaml
-
-    namespace/reverse-words-stage created
+    oc --context hub create -f $DEMO/reversewords-stage/00_namespace.yaml
+    
+namespace/reverse-words-stage created
     ```
-
+    
 1. Now create a PlacementRule that matches the managed development cluster.
 
     ```bash
-    oc --context hub create \
-        -f $DEMO/reversewords-stage/01_placement_rule.yaml
-
-    placementrule.apps.open-cluster-management.io/development-clusters created
+    oc --context hub create -f $DEMO/reversewords-stage/01_placement_rule.yaml
+    
+placementrule.apps.open-cluster-management.io/development-clusters created
     ```
-
-    Check the PlacementRule status, note that it matches the managed development cluster named `dev-cluster`:
-
-    ```bash
-    oc --context hub -n reverse-words-stage
-        get placementrule development-clusters -o yaml
-
+    
+Check the PlacementRule status, note that it matches the managed development cluster named `dev-cluster`:
+    
+```bash
+    oc --context hub -n reverse-words-stage get placementrule development-clusters -o yaml
+    
     <OMITTED_OUTPUT>
-    status:
+status:
       decisions:
       - clusterName: dev-cluster
         clusterNamespace: dev-cluster
     ```
-
+    
 1. The Subscription and the Application can be created targeting the development clusters via the placementrule.
 
     ```bash
-    oc --context hub create \
-        -f $DEMO/reversewords-stage/02_subscription-dev.yaml
-
-    subscription.apps.open-cluster-management.io/
-        reversewords-dev-app-subscription created
-
-    oc --context hub create \
-        -f $DEMO/reversewords-stage/03_application-dev.yaml
+    oc --context hub create -f $DEMO/reversewords-stage/02_subscription-dev.yaml
+    
+subscription.apps.open-cluster-management.io/reversewords-dev-app-subscription created
+    
+    oc --context hub create -f $DEMO/reversewords-stage/03_application-dev.yaml
 
     application.app.k8s.io/reversewords-dev-app created
     ```
 
     See the following Subscription status. Note that it says `propagated`, which means the Subscription has been sent to the destination cluster:
-
-    ```bash
-    oc --context hub -n reverse-words-stage get
-         subscription reversewords-dev-app-subscription -o yaml
+    
+```bash
+    oc --context hub -n reverse-words-stage get subscription reversewords-dev-app-subscription -o yaml
 
     <OMITTED_OUTPUT>
     status:
       lastUpdateTime: "2020-10-05T15:32:00Z"
-      phase: Propagated
+  phase: Propagated
     ```
-
+    
 1. Looking at the development cluster, see that the Application is up and running.
 
     ```bash
@@ -324,24 +316,23 @@ export DEMO="https://raw.githubusercontent.com/
 1. To access the Application on the network, the service needs to be exposed.
 
     ```bash
-    oc --context dev create \
-        -f $DEMO/reversewords-stage/04_service-route.yaml
-
-    route.route.openshift.io/reverse-words created
+    oc --context dev create -f $DEMO/reversewords-stage/04_service-route.yaml
+    
+route.route.openshift.io/reverse-words created
     ```
-
-    Get the address of the route just created:
-
-    ```bash
+    
+Get the address of the route just created:
+    
+```bash
     oc --context dev -n reverse-words-stage get route
-
-    NAME            HOST/PORT
+    
+NAME            HOST/PORT
     reverse-words   reverse-words-reverse-words-stage.apps.okd.highvail.com
         PATH   SERVICES        PORT   TERMINATION   WILDCARD
         reverse-words   http                 None
     ```
-
-    > **Note**: If we run the same query against production cluster, we will see that there is no application running there.
+    
+> **Note**: If we run the same query against production cluster, we will see that there is no application running there.
     >
     > ```bash
     > oc --context prod -n reverse-words-stage get deployments,services
@@ -349,13 +340,13 @@ export DEMO="https://raw.githubusercontent.com/
     > No resources found in reverse-words-stage namespace.
     > ```
     >
-
-    Query the application to see the deployed staging release:
-
-    ```bash
+    
+Query the application to see the deployed staging release:
+    
+```bash
     curl http://reverse-words-reverse-words-stage.apps.okd.highvail.com
-
-    Reverse Words Release: Stage Release v0.0.3. App version: v0.0.3
+    
+Reverse Words Release: Stage Release v0.0.3. App version: v0.0.3
     ```
 
 ## Deploying the Application to the Production Environment
@@ -365,61 +356,54 @@ export DEMO="https://raw.githubusercontent.com/
 1. Create a Namespace for storing the Application manifests on the target production cluster.
 
     ```bash
-    oc --context hub create \
-         -f $DEMO/reversewords-prod/00_namespace.yaml
-
-    namespace/reverse-words-prod created
+    oc --context hub create -f $DEMO/reversewords-prod/00_namespace.yaml
+    
+namespace/reverse-words-prod created
     ```
-
+    
 1. Now create a PlacementRule that matches the production clusters:
 
     ```bash
-    oc --context hub create \
-        -f $DEMO/reversewords-prod/01_placement_rule.yaml
-
-    placementrule.apps.open-cluster-management.io/production-clusters created
+    oc --context hub create -f $DEMO/reversewords-prod/01_placement_rule.yaml
+    
+placementrule.apps.open-cluster-management.io/production-clusters created
     ```
-
-    See the following PlacementRule status. Note that it matched the managed production cluster named, `prod-cluster`.
-
-    ```bash
-    oc --context hub -n reverse-words-prod get
-        placementrule  production-clusters -o yaml
-
+    
+See the following PlacementRule status. Note that it matched the managed production cluster named, `prod-cluster`.
+    
+```bash
+    oc --context hub -n reverse-words-prod get placementrule  production-clusters -o yaml
+    
     <OMITTED_OUTPUT>
-    status:
+status:
       decisions:
       - clusterName: prod-cluster
         clusterNamespace: prod-cluster
     ```
-
+    
 1. The Subscription and the Application can be created now targeting the production clusters via the PlacementRule.
 
     ```bash
-    oc --context hub create \
-        -f $DEMO/reversewords-prod/02_subscription-pro.yaml
-
-    subscription.apps.open-cluster-management.io/
-        reversewords-pro-app-subscription created
-
-    oc --context hub create \
-        -f $DEMO/reversewords-prod/03_application-pro.yaml
+    oc --context hub create -f $DEMO/reversewords-prod/02_subscription-pro.yaml
+    
+subscription.apps.open-cluster-management.io/reversewords-pro-app-subscription created
+    
+    oc --context hub create -f $DEMO/reversewords-prod/03_application-pro.yaml
 
     application.app.k8s.io/reversewords-pro-app created
     ```
 
     Check the Subscription status. Note that it says `propagated`, which means the Subscription has been sent to the destination cluster:
-
-    ```bash
-    oc --context hub -n reverse-words-prod get
-        subscription reversewords-pro-app-subscription -o yaml
+    
+```bash
+    oc --context hub -n reverse-words-prod get subscription reversewords-pro-app-subscription -o yaml
 
     <OMITTED_OUTPUT>
     status:
       message: Active
-      phase: Propagated
+  phase: Propagated
     ```
-
+    
 1. Finally, look at the production cluster and see the application is up and running.
 
     ```bash
@@ -441,31 +425,30 @@ export DEMO="https://raw.githubusercontent.com/
 1. Again, query the application and see that it deployed the production release.
 
     ```bash
-    oc --context prod -n reverse-words-prod create \
-         -f $DEMO/reversewords-prod/04_service-route.yaml
-
-    route.route.openshift.io/reverse-words created
+    oc --context prod -n reverse-words-prod create -f $DEMO/reversewords-prod/04_service-route.yaml
+    
+route.route.openshift.io/reverse-words created
     ```
-
-    Get the address of the route we just created:
-
-    ```bash
+    
+Get the address of the route we just created:
+    
+```bash
     oc --context prod -n reverse-words-prod get route
-
-    NAME            HOST/PORT
+    
+NAME            HOST/PORT
     reverse-words   reverse-words-reverse-words-prod.apps.ocp.highvail.com
         PATH   SERVICES        PORT   TERMINATION   WILDCARD
         reverse-words   http                 None
     ```
-
-    And query the application and see that it deployed the staging release:
-
-    ```bash
+    
+And query the application and see that it deployed the staging release:
+    
+```bash
     curl http://reverse-words-reverse-words-prod.apps.ocp.highvail.com
-
-    Reverse Words Release: Production release v0.0.2. App version: v0.0.2
+    
+Reverse Words Release: Production release v0.0.2. App version: v0.0.2
     ```
-
+    
 1. We can see the different versions of the application in each environment:
 
     ```bash
@@ -667,45 +650,40 @@ We will create two new PlacementRules targeting clusters in the _EU_ region and 
 1. Create a new Namespace to store the required manifests.
 
     ```bash
-    oc --context hub create \
-        -f $DEMO/reversewords-region/00_namespace.yaml
-
-    namespace/reverse-words-region created
+    oc --context hub create -f $DEMO/reversewords-region/00_namespace.yaml
+    
+namespace/reverse-words-region created
     ```
-
+    
 1. Create the required PlacementRules targeting clusters located in _EU_ and _NA_ regions.
 
     ```bash
     # PlacementRule targeting EU region clusters
-    oc --context hub create \
-        -f $DEMO/reversewords-region/01_placement_rule_EU.yaml
-
-    placementrule.apps.open-cluster-management.io/eu-region-clusters created
-
-    # PlacementRule targeting NA region clusters
-    oc --context hub create \
-        -f $DEMO/reversewords-region/02_placement_rule_NA.yaml
-
+    oc --context hub create -f $DEMO/reversewords-region/01_placement_rule_EU.yaml
+    
+placementrule.apps.open-cluster-management.io/eu-region-clusters created
+    
+# PlacementRule targeting NA region clusters
+    oc --context hub create  -f $DEMO/reversewords-region/02_placement_rule_NA.yaml
+    
     placementrule.apps.open-cluster-management.io/na-region-clusters created
-    ```
-
+```
+    
 1. Create the Subscription and Application.
 
     > **NOTE**: The subscription is currently configured to deploy the application using the placementrule matching clusters in EU region.
 
     ```bash
-    oc --context hub create \
-        -f $DEMO/reversewords-region/03_subscription-region.yaml
-
-    subscription.apps.open-cluster-management.io/
+    oc --context hub create -f $DEMO/reversewords-region/03_subscription-region.yaml
+    
+subscription.apps.open-cluster-management.io/
           reversewords-region-app-subscription created
-
-    oc --context hub create \
-        -f $DEMO/reversewords-region/04_application-region.yaml
-
+    
+oc --context hub create -f $DEMO/reversewords-region/04_application-region.yaml
+    
     application.app.k8s.io/reversewords-region-app created
-    ```
-
+```
+    
 1. Now, we should see the application running in the cluster located in EU (development cluster).
 
     ```bash
@@ -724,22 +702,21 @@ We will create two new PlacementRules targeting clusters in the _EU_ region and 
 1. Expose the service and test:
 
     ```bash
-    oc --context dev  create \
-        -f $DEMO/reversewords-region/06_service-route.yaml
-
-    route.route.openshift.io/reverse-words created
-
-    oc --context dev  -n reverse-words-region get route
+    oc --context dev  create -f $DEMO/reversewords-region/06_service-route.yaml
+    
+route.route.openshift.io/reverse-words created
+    
+oc --context dev  -n reverse-words-region get route
     NAME            HOST/PORT
     reverse-words   reverse-words-reverse-words-region.apps.okd.highvail.com
        PATH   SERVICES        PORT   TERMINATION   WILDCARD
        reverse-words   http                 None
-
-    curl http://reverse-words-reverse-words-region.apps.okd.highvail.com
-
-    Reverse Words Release: Production release v0.0.4. App version: v0.0.4
+    
+curl http://reverse-words-reverse-words-region.apps.okd.highvail.com
+    
+Reverse Words Release: Production release v0.0.4. App version: v0.0.4
     ```
-
+    
 1. Run the same query against the cluster located in NA (production cluster). See that we don't have any pods running.
 
     ```bash
@@ -756,18 +733,12 @@ Changing the PlacementRule used by our Subscription will move the application fr
 
 1. Patch the Subscription. The following patch updates the PlacementRule used by the Subscription to `na-region-clusters`.
 
-    Raw command: `oc --context hub -n reverse-words-region patch subscription.apps.open-cluster-management.io/reversewords-region-app-subscription -p '{"spec":{"placement":{"placementRef":{"name":"na-region-clusters"}}}}' --type=merge`
-
     ```bash
-    oc --context hub -n reverse-words-region patch
-    subscription.apps.open-cluster-management.io/reversewords-region-app-subscription
-    -p '{"spec":{"placement":{"placementRef":{"name":"na-region-clusters"}}}}'
-    --type=merge
-
-    subscription.apps.open-cluster-management.io/
-        reversewords-region-app-subscription patched
+oc --context hub -n reverse-words-region patch subscription.apps.open-cluster-management.io/reversewords-region-app-subscription -p '{"spec":{"placement":{"placementRef":{"name":"na-region-clusters"}}}}'--type=merge
+    
+    subscription.apps.open-cluster-management.io/reversewords-region-app-subscription patched
     ```
-
+    
 1. Our application will be moved from _EU_ cluster to _NA_ cluster automatically.
 
     The application is no longer running in  _EU_ (development cluster).
@@ -798,13 +769,12 @@ Changing the PlacementRule used by our Subscription will move the application fr
 1. Add the route and test.
 
     ```bash
-    oc --context prod create \
-        -f $DEMO/reversewords-region/06_service-route.yaml
+    oc --context prod create -f $DEMO/reversewords-region/06_service-route.yaml
     route.route.openshift.io/reverse-words created
-
-    curl http://reverse-words-reverse-words-region.apps.ocp.highvail.com
-
-    Reverse Words Release: Production release v0.0.4. App version: v0.0.4
+    
+curl http://reverse-words-reverse-words-region.apps.ocp.highvail.com
+    
+Reverse Words Release: Production release v0.0.4. App version: v0.0.4
     ```
 
 # Part 4 - Disaster Recovery
@@ -852,39 +822,31 @@ This new PlacementRule will make sure that in case one of the clusters moves to 
 1. Let's create the PlacementRule discussed in the previous section.
 
     ```bash
-    oc --context hub create \
-        -f $DEMO/reversewords-region/05_placement_rule_DR.yaml
-
-    placementrule.apps.open-cluster-management.io/na-eu-region-clusters created
+    oc --context hub create -f $DEMO/reversewords-region/05_placement_rule_DR.yaml
+    
+placementrule.apps.open-cluster-management.io/na-eu-region-clusters created
     ```
-
-    > If we look at the clusters reported by the PlacementRule, we will only see one cluster (production in this case).
-
-    ```bash
-    oc --context hub -n reverse-words-region get
-        placementrule na-eu-region-clusters -o yaml
-
+    
+> If we look at the clusters reported by the PlacementRule, we will only see one cluster (production in this case).
+    
+```bash
+    oc --context hub -n reverse-words-region get placementrule na-eu-region-clusters -o yaml
+    
     <OMITTED_OUTPUT>
-    status:
+status:
       decisions:
       - clusterName: dev-cluster
         clusterNamespace: dev-cluster
     ```
-
+    
 1. Now we can go ahead and update the Subscription we used in the previous blog post. We are going to patch it to use the new PlacementRule we just created.
 
-    Raw command: `oc --context hub -n reverse-words-region patch subscription.apps.open-cluster-management.io/reversewords-region-app-subscription -p '{"spec":{"placement":{"placementRef":{"name":"na-eu-region-clusters"}}}}' --type=merge`
-
     ```bash
-    oc --context hub -n reverse-words-region patch
-    subscription.apps.open-cluster-management.io/reversewords-region-app-subscription
-    -p '{"spec":{"placement":{"placementRef":{"name":"na-eu-region-clusters"}}}}'
-    --type=merge
-
-    subscription.apps.open-cluster-management.io/
-        reversewords-region-app-subscription patched
+oc --context hub -n reverse-words-region patch subscription.apps.open-cluster-management.io/reversewords-region-app-subscription -p '{"spec":{"placement":{"placementRef":{"name":"na-eu-region-clusters"}}}}' --type=merge
+    
+    subscription.apps.open-cluster-management.io/reversewords-region-app-subscription patched
     ```
-
+    
 1. The application will run in _EU_ cluster (development).
 
     ```bash
@@ -907,46 +869,45 @@ This new PlacementRule will make sure that in case one of the clusters moves to 
     1. As soon as Red Hat Advanced Cluster Management detects my _EU_ cluster is gone, the PlacementRule gets updated and now it points to the _NA_ cluster.
 
         ```bash
-        oc --context hub -n reverse-words-region get placementrule \
-              na-eu-region-clusters -o yaml
+        oc --context hub -n reverse-words-region get placementrule na-eu-region-clusters -o yaml
         ```
-
-        > The placementrule now points to _NA_ cluster.
-
-        ```bash
+        
+> The placementrule now points to _NA_ cluster.
+        
+```bash
         <OMITTED_OUTPUT>
         status:
           decisions:
           - clusterName: prod-cluster
             clusterNamespace: prod-cluster
         ```
-
-    1. The application has been moved automatically to the _NA_ cluster.
-
-        ```bash
+        
+1. The application has been moved automatically to the _NA_ cluster.
+    
+    ```bash
         oc --context prod-n reverse-words-region get deployments,services,pods
-
-        NAME                            READY   UP-TO-DATE   AVAILABLE   AGE
+    
+    NAME                            READY   UP-TO-DATE   AVAILABLE   AGE
         deployment.apps/reverse-words   1/1     1            1           46s
-
-        NAME          TYPE         CLUSTER-IP    EXTERNAL-IP PORT(S)        AGE
+    
+    NAME          TYPE         CLUSTER-IP    EXTERNAL-IP PORT(S)        AGE
         reverse-words LoadBalancer 172.30.79.192 <pending>   8080:32106/TCP 46s
-
-        NAME                                READY   STATUS    RESTARTS   AGE
+    
+    NAME                                READY   STATUS    RESTARTS   AGE
         pod/reverse-words-b44c6745c-xjqsz   1/1     Running   0          45s
         ```
-
-    1. EU Status
-
-        The _EU_ cluster is offline.
-
-        ![Failing the EU Cluster](artifacts/ocpFailedNode.png)
-
-    1. Restarting the EU Cluster
-
-        When the _EU_ cluster is online again, it will get added to the PlacementRule again automatically.
-
-        ![Restored Node](artifacts/ocpRestoredNode.png)
+    
+1. EU Status
+    
+    The _EU_ cluster is offline.
+    
+    ![Failing the EU Cluster](artifacts/ocpFailedNode.png)
+    
+1. Restarting the EU Cluster
+    
+    When the _EU_ cluster is online again, it will get added to the PlacementRule again automatically.
+    
+    ![Restored Node](artifacts/ocpRestoredNode.png)
 
 # The Advanced Cluster Manager Web Console
 
