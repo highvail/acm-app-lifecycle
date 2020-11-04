@@ -1,6 +1,6 @@
 commonLabels:
   app: reversewords-pro-app
 bases:
-- github.com/zombiefish/acm-app-lifecycle/apps/reversewords?ref=config
+- github.com/highvail/acm-app-lifecycle/apps/reversewords?ref=config
 patchesStrategicMerge:
 - overlays/deployment.yaml
