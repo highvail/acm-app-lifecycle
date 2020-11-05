@@ -1,5 +1,5 @@
 commonLabels:
-  app: reversewords-dev-app
+  app: reversewords-qa-app
 bases:
 - github.com/highvail/acm-app-lifecycle/apps/reversewords?ref=config
 patchesStrategicMerge:
