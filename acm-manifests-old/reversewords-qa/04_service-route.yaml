@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Route
+metadata:
+  name: reverse-words
+  namespace: reverse-words-qa
+spec:
+  to:
+    kind: Service
+    name: reverse-words
+    weight: 100
+  port:
+    targetPort: http
