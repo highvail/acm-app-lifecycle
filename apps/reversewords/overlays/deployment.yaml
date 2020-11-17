@@ -9,8 +9,8 @@ spec:
     spec:
       containers:
       - name: reverse-words
-        image: quay.io/mavazque/reversewords:v0.0.4
+        image: quay.io/mavazque/reversewords:v0.0.3
         env:
         - name: RELEASE
-          value: "Stage Release v0.0.4"
+          value: "Stage Release v0.0.3"
         - $patch: replace
